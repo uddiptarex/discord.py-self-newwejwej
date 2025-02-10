@@ -2249,8 +2249,10 @@ class FriendSourceFlags(BaseFlags):
     __slots__ = ()
 
     @classmethod
-    def _from_dict(cls, data: dict) -> Self:
+    def _from_dict(cls, data: Optional[dict]) -> Self:
         self = cls()
+        if not data:
+            return self
         if data.get('mutual_friends'):
             self.mutual_friends = True
         if data.get('mutual_guilds'):
