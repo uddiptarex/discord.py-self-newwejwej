@@ -2005,6 +2005,14 @@ class LibraryApplicationFlags(BaseFlags):
         """:class:`bool`: Returns ``True`` if the library application is free for premium users."""
         return 1 << 4
 
+    @flag_value
+    def overlay_v3_disabled(self):
+        """:class:`bool`: Returns ``True`` if the library application has the new Discord overlay implementation disabled.
+
+        .. versionadded:: 2.1
+        """
+        return 1 << 5
+
 
 @fill_with_flags()
 class ApplicationDiscoveryFlags(BaseFlags):
