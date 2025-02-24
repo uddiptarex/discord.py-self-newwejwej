@@ -5170,6 +5170,24 @@ of :class:`enum.Enum`.
 
         Represents Linux.
 
+    .. attribute:: android
+
+        Represents Android.
+
+    .. attribute:: ios
+
+        Represents iOS.
+
+    .. attribute:: playstation
+
+        Represents PlayStation.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: unknown
+
+        Represents an unknown operating system.
+
 .. class:: StickerAnimationOptions
 
     Represents the options found in ``Settings > Accessibility > Stickers`` in the Discord client.
