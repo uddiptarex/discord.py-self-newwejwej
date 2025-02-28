@@ -1933,6 +1933,9 @@ class Messageable:
             Sending the message failed.
         ~discord.Forbidden
             You do not have the proper permissions to send the message.
+        ~discord.NotFound
+            You sent a message with the same nonce as one that has been explicitly
+            deleted shortly earlier.
         ValueError
             The ``files`` list is not of the appropriate size.
         TypeError
