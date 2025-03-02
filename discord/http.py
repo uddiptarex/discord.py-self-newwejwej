@@ -1238,7 +1238,7 @@ class HTTPClient:
 
         return self.request(Route('POST', '/channels/{channel_id}/greet', channel_id=channel_id), json=payload)
 
-    def send_typing(self, channel_id: Snowflake) -> Response[None]:
+    def send_typing(self, channel_id: Snowflake) -> Response[Optional[message.TypingResponse]]:
         return self.request(Route('POST', '/channels/{channel_id}/typing', channel_id=channel_id))
 
     async def ack_message(
