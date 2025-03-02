@@ -595,6 +595,8 @@ class HTTPClient:
         captcha: Optional[Callable[[CaptchaRequired], Coroutine[Any, Any, str]]] = None,
         max_ratelimit_timeout: Optional[float] = None,
         locale: Callable[[], str] = lambda: 'en-US',
+        debug_options: Optional[Sequence[str]] = None,
+        rpc_proxy: Optional[str] = None,
     ) -> None:
         self.connector: aiohttp.BaseConnector = connector or MISSING
         self.__session: aiohttp.ClientSession = MISSING
@@ -608,6 +610,7 @@ class HTTPClient:
         # When this reaches 256 elements, it will try to evict based off of expiry
         self._buckets: Dict[str, Ratelimit] = {}
         self._global_over: asyncio.Event = MISSING
+        self.user_id: Optional[int] = None
         self.token: Optional[str] = None
         self.ack_token: Optional[str] = None
         self.proxy: Optional[str] = proxy
@@ -617,6 +620,11 @@ class HTTPClient:
         self.captcha_handler: Optional[Callable[[CaptchaRequired], Coroutine[Any, Any, str]]] = captcha
         self.max_ratelimit_timeout: Optional[float] = max(30.0, max_ratelimit_timeout) if max_ratelimit_timeout else None
         self.get_locale: Callable[[], str] = locale
+        self.debug_options: Optional[Sequence[str]] = debug_options
+        self.rpc_proxy: Optional[str] = rpc_proxy
+
+        if debug_options and 'trace' in debug_options:
+            self.tracer = utils.IDGenerator()
 
         self.super_properties: Dict[str, Any] = {}
         self.encoded_super_properties: str = MISSING
@@ -746,7 +754,6 @@ class HTTPClient:
             'Sec-Fetch-Site': 'same-origin',
             'User-Agent': self.user_agent,
             'X-Discord-Locale': self.get_locale(),
-            'X-Debug-Options': 'bugReporterEnabled',
             'X-Super-Properties': self.encoded_super_properties,
         }
 
@@ -761,6 +768,12 @@ class HTTPClient:
         else:
             if timezone:
                 headers['X-Discord-Timezone'] = timezone
+
+        if self.debug_options:
+            headers['X-Debug-Options'] = ','.join(self.debug_options)
+
+        if self.rpc_proxy:
+            headers['X-RPC-Proxy'] = self.rpc_proxy
 
         if self.token is not None and kwargs.get('auth', True):
             headers['Authorization'] = self.token
@@ -793,6 +806,7 @@ class HTTPClient:
         response: Optional[aiohttp.ClientResponse] = None
         data: Optional[Union[Dict[str, Any], str]] = None
         failed = 0  # Number of 500'd requests
+        trace_id = None
         async with ratelimit:
             for tries in range(5):
                 if files:
@@ -806,12 +820,22 @@ class HTTPClient:
                         form_data.add_field(**params)
                     kwargs['data'] = form_data
 
+                if self.tracer:
+                    trace_id = self.tracer.generate(self.user_id or 0)
+                    headers['X-Client-Trace-ID'] = trace_id
+
                 if failed:
                     headers['X-Failed-Requests'] = str(failed)
 
                 try:
                     async with self.__session.request(method, url, **kwargs) as response:
-                        _log.debug('%s %s with %s has returned %s.', method, url, kwargs.get('data'), response.status)
+                        log_fmt = '%s %s with %s has returned %s.'
+                        log_params = [method, url, kwargs.get('data'), response.status]
+                        if trace_id is not None:
+                            log_fmt += '\nTrace URL: https://datadog.discord.tools/apm/traces?query=@http.x_client_trace_id:"%s"&showAllSpans=true'
+                            log_params.append(trace_id)
+                        _log.debug(log_fmt, *log_params)
+
                         data = await json_or_text(response)
 
                         # Update and use rate limit information if the bucket header is present
@@ -1070,6 +1094,7 @@ class HTTPClient:
     # Login management
 
     def _token(self, token: str) -> None:
+        # This should NEVER be called with a token for a different user
         self.token = token
         self.ack_token = None
 
@@ -1084,6 +1109,8 @@ class HTTPClient:
                 raise LoginFailure('Improper token has been passed') from exc
             raise
 
+        self.ack_token = None
+        self.user_id = int(data['id'])
         return data
 
     # Self user
