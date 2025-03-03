@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from random import choice, choices
+import re
 import ssl
 import string
 from typing import (
@@ -880,13 +881,14 @@ class HTTPClient:
                                     )
 
                         # 202s must be retried
-                        if response.status == 202 and isinstance(data, dict) and data['code'] == 110000:
-                            # We update the `attempts` query parameter
-                            params = kwargs.get('params')
-                            if not params:
-                                kwargs['params'] = {'attempts': 1}
-                            else:
-                                params['attempts'] = (params.get('attempts') or 0) + 1
+                        if response.status == 202 and isinstance(data, dict):
+                            if data['code'] == 110000:
+                                # We update the `attempts` query parameter
+                                params = kwargs.get('params')
+                                if not params:
+                                    kwargs['params'] = {'attempts': 1}
+                                else:
+                                    params['attempts'] = (params.get('attempts') or 0) + 1
 
                             # Sometimes retry_after is 0, but that's undesirable
                             retry_after: float = data['retry_after'] or 5
@@ -901,9 +903,21 @@ class HTTPClient:
 
                         # Rate limited
                         if response.status == 429:
-                            if not response.headers.get('Via') or isinstance(data, str):
-                                # Banned by Cloudflare more than likely.
-                                raise HTTPException(response, data)
+                            if isinstance(data, str):
+                                # Cloudflare ban
+                                is_global = False
+                                retry_after = int(response.headers.get('Retry-After', '0'))
+                                if not retry_after:
+                                    # Unhandleable
+                                    result = re.search(r'<span>(\d{3,4})</span>', data)
+                                    code = int(result.group(1)) if result else 'Unknown'
+                                    raise HTTPException(response, f'Cloudflare ban (code: {code})')
+                            else:
+                                is_global: bool = data.get('global', False)
+                                retry_after: float = data.get('retry_after', int(response.headers.get('Retry-After', 0)))
+
+                            # Cloudflare rate limit
+                            is_cloudflare = not response.headers.get('Via')
 
                             if ratelimit.remaining > 0:
                                 # According to night
@@ -918,7 +932,11 @@ class HTTPClient:
                                     ratelimit.remaining,
                                 )
 
-                            retry_after: float = data['retry_after']
+                            if 'Retry-After' in response.headers:
+                                # Sometimes Cloudflare rate limits will have their retry_after field in milliseconds
+                                if int(response.headers['Retry-After']) == int(retry_after / 1000):
+                                    retry_after /= 1000.0
+
                             if self.max_ratelimit_timeout and retry_after > self.max_ratelimit_timeout:
                                 _log.warning(
                                     'We are being rate limited. %s %s responded with 429. Timeout of %.2f was too long, erroring instead.',
@@ -926,7 +944,7 @@ class HTTPClient:
                                     url,
                                     retry_after,
                                 )
-                                raise RateLimited(retry_after)
+                                raise RateLimited(retry_after, cloudflare=is_cloudflare)
 
                             fmt = 'We are being rate limited. %s %s responded with 429. Retrying in %.2f seconds.'
                             _log.warning(fmt, method, url, retry_after)
@@ -938,10 +956,12 @@ class HTTPClient:
                             )
 
                             # Check if it's a global rate limit
-                            is_global = data.get('global', False)
                             if is_global:
                                 _log.warning('Global rate limit has been hit. Retrying in %.2f seconds.', retry_after)
                                 self._global_over.clear()
+
+                            if is_cloudflare:
+                                _log.warning('Cloudflare rate limit has been hit. Retrying in %.2f seconds.', retry_after)
 
                             await asyncio.sleep(retry_after)
                             _log.debug('Done sleeping for the rate limit. Retrying...')
