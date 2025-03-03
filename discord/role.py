@@ -705,7 +705,7 @@ class Role(Hashable):
         You must have :attr:`~discord.Permissions.manage_roles` to do this,
         and you cannot move roles above the client's top role in the guild.
 
-        .. versionadded:: 2.5
+        .. versionadded:: 2.1
 
         Parameters
         -----------
