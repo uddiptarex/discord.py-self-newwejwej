@@ -8401,6 +8401,11 @@ Flags
 .. autoclass:: ChannelFlags()
     :members:
 
+.. attributetable:: EmbedFlags
+
+.. autoclass:: EmbedFlags()
+    :members:
+
 .. attributetable:: FriendSourceFlags
 
 .. autoclass:: FriendSourceFlags()
