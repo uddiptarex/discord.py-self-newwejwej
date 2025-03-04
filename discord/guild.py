@@ -168,6 +168,11 @@ class BulkBanResult(NamedTuple):
     failed: List[Object]
 
 
+class DirectoryBroadcastEligibility(NamedTuple):
+    can_broadcast: bool
+    has_broadcast: bool
+
+
 class _GuildLimit(NamedTuple):
     emoji: int
     stickers: int
@@ -5543,12 +5548,19 @@ class Guild(Hashable):
         data = await self._state.http.migrate_command_scope(self.id)
         return list(map(int, data['integration_ids_with_app_commands']))
 
-    async def directory_broadcast_eligibility(self) -> bool:
+    async def directory_broadcast_eligibility(
+        self, scheduled_event: Optional[Snowflake] = None, /
+    ) -> DirectoryBroadcastEligibility:
         """|coro|
 
         Checks if scheduled events can be broadcasted to the directories the guild is in.
 
         .. versionadded:: 2.1
+
+        Parameters
+        -----------
+        scheduled_event: Optional[:class:`ScheduledEvent`]
+            The scheduled event to check eligibility for.
 
         Raises
         -------
@@ -5557,11 +5569,15 @@ class Guild(Hashable):
 
         Returns
         --------
-        :class:`bool`
-            Whether the guild is eligible to broadcast scheduled events to directories.
+        tuple[:class:`bool`, :class:`bool`]
+            Whether the guild is eligible to broadcast scheduled events to directories
+            and whether the given scheduled event has been broadcasted, if applicable.
+            This is also accessible as a namedtuple with ``can_broadcast`` and ``has_broadcast`` fields.
         """
-        data = await self._state.http.get_directory_broadcast_info(self.id, 1)
-        return data['can_broadcast']
+        data = await self._state.http.get_directory_broadcast_info(
+            self.id, 1, scheduled_event.id if scheduled_event else None
+        )
+        return DirectoryBroadcastEligibility(data['can_broadcast'], data.get('has_broadcast', False))
 
     @property
     def invites_paused_until(self) -> Optional[datetime]:

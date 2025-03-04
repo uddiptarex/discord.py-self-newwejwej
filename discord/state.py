@@ -104,6 +104,7 @@ from .read_state import ReadState
 from .tutorial import Tutorial
 from .experiment import UserExperiment, GuildExperiment
 from .metadata import Metadata
+from .directory import DirectoryEntry
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -3238,6 +3239,48 @@ class ConnectionState:
                 )
         else:
             _log.debug('SCHEDULED_EVENT_USER_REMOVE referencing unknown guild ID: %s. Discarding.', data['guild_id'])
+
+    def parse_guild_directory_entry_create(self, data: gw.DirectoryEntryEvent) -> None:
+        guild = self._get_guild(int(data['guild_id']))
+        if guild is None:
+            _log.debug('GUILD_DIRECTORY_ENTRY_CREATE referencing unknown guild ID: %s. Discarding.', data['guild_id'])
+            return
+
+        channel = guild.get_channel(int(data['directory_channel_id']))
+        if channel is None:
+            _log.debug('GUILD_DIRECTORY_ENTRY_CREATE referencing unknown channel ID: %s. Discarding.', data['directory_channel_id'])
+            return
+
+        entry = DirectoryEntry(data=data, state=self, channel=channel)  # type: ignore # channel should always be a DirectoryChannel
+        self.dispatch('directory_entry_create', entry)
+
+    def parse_guild_directory_entry_update(self, data: gw.DirectoryEntryEvent) -> None:
+        guild = self._get_guild(int(data['guild_id']))
+        if guild is None:
+            _log.debug('GUILD_DIRECTORY_ENTRY_UPDATE referencing unknown guild ID: %s. Discarding.', data['guild_id'])
+            return
+
+        channel = guild.get_channel(int(data['directory_channel_id']))
+        if channel is None:
+            _log.debug('GUILD_DIRECTORY_ENTRY_UPDATE referencing unknown channel ID: %s. Discarding.', data['directory_channel_id'])
+            return
+
+        entry = DirectoryEntry(data=data, state=self, channel=channel)  # type: ignore # channel should always be a DirectoryChannel
+        self.dispatch('directory_entry_update', entry)
+
+    def parse_guild_directory_entry_delete(self, data: gw.DirectoryEntryDeleteEvent) -> None:
+        guild = self._get_guild(int(data['guild_id']))
+        if guild is None:
+            _log.debug('GUILD_DIRECTORY_ENTRY_DELETE referencing unknown guild ID: %s. Discarding.', data['guild_id'])
+            return
+
+        channel = guild.get_channel(int(data['directory_channel_id']))
+        if channel is None:
+            _log.debug('GUILD_DIRECTORY_ENTRY_DELETE referencing unknown channel ID: %s. Discarding.', data['directory_channel_id'])
+            return
+
+        entry = DirectoryEntry(data=data, state=self, channel=channel)  # type: ignore # channel should always be a DirectoryChannel
+        self.dispatch('directory_entry_delete', entry)
 
     def parse_call_create(self, data: gw.CallCreateEvent) -> None:
         channel_id = int(data['channel_id'])

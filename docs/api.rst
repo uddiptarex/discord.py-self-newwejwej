@@ -382,6 +382,20 @@ Debug
                     message or :class:`str` to denote a regular text message.
     :type payload: Union[:class:`bytes`, :class:`str`]
 
+Directory Entries
+~~~~~~~~~~~~~~~~~~
+
+.. function:: on_directory_entry_create(directory_entry)
+              on_directory_entry_update(directory_entry)
+              on_directory_entry_delete(directory_entry)
+
+    Called when an entry is created, updated, or deleted in a directory channel.
+
+    .. versionadded:: 2.1
+
+    :param directory_entry: The directory entry that was created, updated, or deleted.
+    :type directory_entry: :class:`DirectoryEntry`
+
 Gateway
 ~~~~~~~~
 
