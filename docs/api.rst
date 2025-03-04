@@ -4626,6 +4626,12 @@ of :class:`enum.Enum`.
 
         The SKU is an adventure game.
 
+    .. attribute:: arcade
+
+        The SKU is an arcade game.
+
+        .. versionadded:: 2.1
+
     .. attribute:: artillery
 
         The SKU is an artillery game.
@@ -4718,6 +4724,12 @@ of :class:`enum.Enum`.
 
         The SKU is a hockey game.
 
+    .. attribute:: indie
+
+        The SKU is an indie game.
+
+        .. versionadded:: 2.1
+
     .. attribute:: life_simulator
 
         The SKU is a life simulator.
@@ -4728,13 +4740,29 @@ of :class:`enum.Enum`.
 
     .. attribute:: massively_multiplayer
 
-        The SKU is a massively multiplayer game.
+        The SKU is a massively multiplayer online game.
 
-    .. attribute:: music
+    .. attribute:: metroidvania
 
-        The SKU is a music game.
+        The SKU is a Metroidvania game.
 
-    .. attribute:: party
+    .. attribute:: mmorpg
+
+        The SKU is a MMORPG.
+
+    .. attribute:: moba
+
+        The SKU is a MOBA.
+
+    .. attribute:: music_rhythm
+
+        The SKU is a rhythm game.
+
+    .. attribute:: open_world
+
+        The SKU is an open-world game.
+
+    .. attribute:: party_mini_game
 
         The SKU is a party game.
 
@@ -4749,6 +4777,12 @@ of :class:`enum.Enum`.
     .. attribute:: point_and_click
 
         The SKU is a point-and-click game.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: psychological_horror
+
+        The SKU is a psychological horror game.
 
     .. attribute:: puzzle
 
@@ -4814,13 +4848,31 @@ of :class:`enum.Enum`.
 
         The SKU is a survival game.
 
-    .. attribute:: tennis
+    .. attribute:: survival_horror
 
-        The SKU is a tennis game.
+        The SKU is a survival horror game.
 
-    .. attribute:: third_person_shooter
+    .. attribute:: tactical
 
-        The SKU is a third-person shooter.
+        The SKU is a tactical game.
+
+        .. versionadded:: 2.1
+
+    .. attribute:: tower_defense
+
+        The SKU is a tower defense game.
+
+    .. attribute:: track_field
+
+        The SKU is a track and field game.
+
+    .. attribute:: train_simulator
+
+        The SKU is a train simulator game.
+
+    .. attribute:: trivia_board_game
+
+        The SKU is a trivia/board game.
 
     .. attribute:: turn_based_strategy
 
