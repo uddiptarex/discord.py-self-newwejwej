@@ -866,13 +866,14 @@ class GuildSubscriptions:
 
 
 class ClientStatus:
-    __slots__ = ('status', 'desktop', 'mobile', 'web')
+    __slots__ = ('status', 'desktop', 'mobile', 'web', 'embedded')
 
     def __init__(self, status: Optional[str] = None, data: Optional[ClientStatusPayload] = None, /) -> None:
         self.status: str = 'offline'
         self.desktop: Optional[str] = None
         self.mobile: Optional[str] = None
         self.web: Optional[str] = None
+        self.embedded: Optional[str] = None
 
         if status is not None or data is not None:
             self._update(status or 'offline', data or {})
@@ -883,6 +884,7 @@ class ClientStatus:
             ('desktop', self.desktop),
             ('mobile', self.mobile),
             ('web', self.web),
+            ('embedded', self.embedded),
         ]
         inner = ' '.join('%s=%r' % t for t in attrs)
         return f'<{self.__class__.__name__} {inner}>'
@@ -892,6 +894,7 @@ class ClientStatus:
         self.desktop = data.get('desktop')
         self.mobile = data.get('mobile')
         self.web = data.get('web')
+        self.embedded = data.get('embedded')
 
     @classmethod
     def _copy(cls, client_status: Self, /) -> Self:
