@@ -282,6 +282,27 @@ class UserGuild(Hashable):
         """
         return True
 
+    async def webhook_channels(self) -> List[PartialMessageable]:
+        """|coro|
+
+        Retrieves the channels that the current user can create webhooks in for the guild.
+
+        .. versionadded:: 2.1
+
+        Raises
+        -------
+        HTTPException
+            Retrieving the webhook channels failed.
+
+        Returns
+        --------
+        List[ :class:`PartialMessageable`]
+            The channels that the current user can create webhooks in. Any :class:`PartialMessageable` will have its :attr:`PartialMessageable.name` filled in.
+        """
+        state = self._state
+        data = await state.http.get_guild_webhook_channels(self.id)
+        return [PartialMessageable._from_webhook_channel(self, c) for c in data]
+
     async def leave(self) -> None:
         """|coro|
 
@@ -5232,7 +5253,6 @@ class Guild(Hashable):
         self_mute: bool = False,
         self_deaf: bool = False,
         self_video: bool = False,
-        preferred_region: Optional[str] = MISSING,
     ) -> None:
         """|coro|
 
@@ -5253,8 +5273,7 @@ class Guild(Hashable):
         self_deaf: :class:`bool`
             Indicates if the client should be self-deafened.
         self_video: :class:`bool`
-            Indicates if the client is using video. Untested & unconfirmed
-            (do not use).
+            Indicates if the client is using video. Do not use.
         """
         state = self._state
         ws = state.ws
