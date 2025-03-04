@@ -2712,6 +2712,7 @@ class ConnectionState:
 
         entry = AuditLogEntry(
             users=self._users,
+            integrations={},
             automod_rules={},
             webhooks={},
             data=data,

@@ -4184,7 +4184,6 @@ class Guild(Hashable):
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
         role = Role(guild=self, data=data, state=self._state)
 
-        # TODO: add to cache
         return role
 
     async def edit_role_positions(self, positions: Mapping[Snowflake, int], *, reason: Optional[str] = None) -> List[Role]:
@@ -4632,6 +4631,9 @@ class Guild(Hashable):
             users = (User(data=raw_user, state=self._state) for raw_user in data.get('users', []))
             user_map = {user.id: user for user in users}
 
+            integrations = (Integration(data=raw_i, guild=self) for raw_i in data.get('integrations', []))
+            integration_map = {integration.id: integration for integration in integrations}
+
             automod_rules = (
                 AutoModRule(data=raw_rule, guild=self, state=self._state)
                 for raw_rule in data.get('auto_moderation_rules', [])
@@ -4651,6 +4653,7 @@ class Guild(Hashable):
                 yield AuditLogEntry(
                     data=raw_entry,
                     users=user_map,
+                    integrations=integration_map,
                     automod_rules=automod_rule_map,
                     webhooks=webhook_map,
                     guild=self,
