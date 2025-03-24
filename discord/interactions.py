@@ -208,7 +208,7 @@ async def _wrapped_interaction(
         # response to be delayed until the gateway is reconnected
         # 12 seconds should be enough to account for this
         i = await state.client.wait_for(
-            'interaction_finish',
+            'interaction',
             check=lambda d: d.nonce == nonce,
             timeout=12,
         )
